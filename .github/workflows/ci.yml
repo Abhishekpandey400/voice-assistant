@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api:
+    name: Build API
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore API/MinuteHire.sln
+
+      - name: Build
+        run: dotnet build API/MinuteHire.sln -c Release --no-restore -warnaserror
+
+  ui:
+    name: Build UI
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: UI
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: UI/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Type-check and build
+        run: npm run build
+
+  docker:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+    needs: [api, ui]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: API image
+        run: docker build -f docker/api.Dockerfile -t minutehire-api .
+
+      - name: UI image
+        run: docker build -f docker/ui.Dockerfile -t minutehire-ui .

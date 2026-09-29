@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MinuteHire ER Diagram</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <style>
+      :root { --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; --line: #e2e8f0; --brand: #4f46e5; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 Inter, ui-sans-serif, system-ui, sans-serif; }
+      main { max-width: 1200px; margin: 0 auto; padding: 32px 16px 64px; }
+      h1 { margin: 0; font-size: 28px; letter-spacing: -0.02em; }
+      p.lead { margin: 6px 0 24px; color: var(--muted); }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 24px; overflow-x: auto; }
+      .diagram { min-width: 900px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+      th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+      th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+      code { background: #eef2ff; color: #3730a3; padding: 2px 6px; border-radius: 6px; font-size: 13px; }
+      h2 { font-size: 18px; margin: 32px 0 12px; }
+      a { color: var(--brand); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>MinuteHire Voice Assistant: data model</h1>
+      <p class="lead">PostgreSQL schema behind authentication, permission-based RBAC, AI conversations and activity logging. </p>
+
+      <div class="card">
+        <pre class="mermaid diagram">
+erDiagram
+    Roles ||--o{ RolePermissions : grants
+    Permissions ||--o{ RolePermissions : "granted via"
+    Roles ||--o{ Users : assigns
+    Users ||--o{ Conversations : owns
+    Conversations ||--o{ ConversationMessages : contains
+    Users |o--o{ ActivityLogs : performs
+    Conversations |o--o{ ActivityLogs : references
+
+    Roles {
+        int Id PK
+        varchar Name UK
+        varchar Description
+    }
+    Permissions {
+        int Id PK
+        varchar Code UK
+        varchar Description
+    }
+    RolePermissions {
+        int RoleId PK, FK
+        int PermissionId PK, FK
+    }
+    Users {
+        uuid Id PK
+        varchar FullName
+        varchar Email UK
+        varchar PasswordHash
+        int RoleId FK
+        bool IsActive
+        timestamptz CreatedAt
+        timestamptz LastLoginAt
+    }
+    Conversations {
+        uuid Id PK
+        uuid UserId FK
+        varchar Title
+        timestamptz StartedAt
+        timestamptz LastActivityAt
+    }
+    ConversationMessages {
+        bigint Id PK
+        uuid ConversationId FK
+        varchar Sender "User or Assistant"
+        text Content
+        varchar InputMode "Text or Voice"
+        timestamptz CreatedAt
+    }
+    ActivityLogs {
+        bigint Id PK
+        uuid UserId FK "nullable"
+        varchar UserEmail
+        varchar RoleName
+        varchar Action
+        uuid ConversationId FK "nullable"
+        varchar InputMode
+        text RequestText
+        text ResponseText
+        varchar Provider
+        varchar Model
+        int LatencyMs
+        bool IsSuccess
+        varchar ErrorMessage
+        varchar IpAddress
+        varchar UserAgent
+        timestamptz CreatedAt
+    }
+        </pre>
+      </div>
+
+      <h2>Role permissions</h2>
+      <div class="card">
+        <table>
+          <thead><tr><th>Role</th><th>Permissions</th></tr></thead>
+          <tbody>
+            <tr><td>Admin</td><td><code>dashboard.view</code> <code>activity-logs.read</code> <code>conversations.read-all</code> <code>users.manage</code></td></tr>
+            <tr><td>Teacher</td><td><code>assistant.use</code></td></tr>
+            <tr><td>Student</td><td><code>assistant.use</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Logged actions</h2>
+      <div class="card">
+        <table>
+          <thead><tr><th>Action</th><th>Captured detail</th></tr></thead>
+          <tbody>
+            <tr><td>Login / LoginFailed</td><td>User, role, IP address, user agent, failure reason</td></tr>
+            <tr><td>ConversationStarted</td><td>User, role, conversation</td></tr>
+            <tr><td>AiInteraction</td><td>Voice or text input, transcript, AI response, provider, model, latency, success or error</td></tr>
+            <tr><td>UserCreated / UserStatusChanged</td><td>Acting admin and the affected account</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+    <script type="module">
+      import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'
+      mermaid.initialize({ startOnLoad: true, theme: 'neutral', er: { useMaxWidth: false } })
+    </script>
+  </body>
+</html>
