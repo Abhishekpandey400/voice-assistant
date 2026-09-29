@@ -32,10 +32,7 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        fromService:
-          type: web
-          name: minutehire-api
-          property: host
+        value: https://minutehire-api.onrender.com
 
 databases:
   - name: minutehire-db
