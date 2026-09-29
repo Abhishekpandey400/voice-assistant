@@ -3,6 +3,7 @@ services:
     name: minutehire-api
     runtime: docker
     plan: free
+    autoDeployTrigger: checksPass
     dockerfilePath: ./docker/api.Dockerfile
     dockerContext: .
     healthCheckPath: /health
@@ -21,6 +22,7 @@ services:
   - type: web
     name: minutehire-ui
     runtime: static
+    autoDeployTrigger: checksPass
     rootDir: UI
     buildCommand: npm ci && npm run build
     staticPublishPath: dist
