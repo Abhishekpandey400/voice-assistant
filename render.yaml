@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: minutehire-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./docker/api.Dockerfile
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: ConnectionStrings__Default
+        fromDatabase:
+          name: minutehire-db
+          property: connectionString
+      - key: Jwt__Key
+        generateValue: true
+      - key: Ai__Providers__0__ApiKey
+        sync: false
+      - key: Ai__Providers__1__ApiKey
+        sync: false
+
+  - type: web
+    name: minutehire-ui
+    runtime: static
+    rootDir: UI
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: minutehire-api
+          property: host
+
+databases:
+  - name: minutehire-db
+    plan: free
+    databaseName: minutehire
