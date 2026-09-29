@@ -49,6 +49,27 @@ jobs:
       - name: Type-check and build
         run: npm run build
 
+  hirely:
+    name: Build Hirely (Task 1)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Hirely
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: Hirely/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Type-check and build
+        run: npm run build
+
   docker:
     name: Build Docker images
     runs-on: ubuntu-latest
