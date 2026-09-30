@@ -30,6 +30,10 @@ export function saveSession(session: LoginResponse | null) {
   }
 }
 
+export function warmUpApi() {
+  fetch(`${API_URL}/health`, { mode: 'no-cors', cache: 'no-store' }).catch(() => undefined)
+}
+
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE'
   json?: unknown
