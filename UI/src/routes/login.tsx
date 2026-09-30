@@ -1,6 +1,7 @@
 import { GraduationCap, ShieldCheck, UserRound } from 'lucide-react'
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
+import { warmUpApi } from '@/lib/api'
 import { homePathFor, useAuth } from '@/lib/auth/AuthContext'
 import { Logo } from '@/components/shell/AppShell'
 import { Alert } from '@/components/ui/alert'
@@ -20,6 +21,11 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
+  const [slow, setSlow] = useState(false)
+
+  useEffect(() => {
+    if (!user) warmUpApi()
+  }, [user])
 
   if (user) return <Navigate to={homePathFor(user)} replace />
 
@@ -27,12 +33,15 @@ export function LoginPage() {
     event?.preventDefault()
     setBusy(true)
     setError(null)
+    const slowTimer = window.setTimeout(() => setSlow(true), 3000)
     try {
       const profile = await login(credentials.email, credentials.password)
       navigate(homePathFor(profile), { replace: true })
     } catch (err) {
       setError((err as Error).message)
     } finally {
+      window.clearTimeout(slowTimer)
+      setSlow(false)
       setBusy(false)
     }
   }
@@ -62,6 +71,11 @@ export function LoginPage() {
 
           <form onSubmit={submit} className="mt-8 space-y-4">
             {error && <Alert onClose={() => setError(null)}>{error}</Alert>}
+            {slow && (
+              <p role="status" className="rounded-lg bg-brand-50 px-3 py-2 text-sm text-brand-700">
+                Waking up the server. The first sign-in after a quiet period can take up to a minute.
+              </p>
+            )}
             <label className="block">
               <span className="mb-1 block text-sm font-medium text-slate-700">Email</span>
               <input className={inputClass} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
